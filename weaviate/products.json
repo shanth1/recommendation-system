@@ -5,6 +5,12 @@
 			"name": "test",
 			"description": "cats cats",
 			"image_name": "cats.jpg"
+		},
+		{
+			"id": "eced1121-4213-42d4-9385-8e75f4c290d4",
+			"name": "test2",
+			"description": "dogs dogs",
+			"image_name": "dogs.jpg"
 		}
     ]
 }

@@ -5,6 +5,7 @@ import weaviate
 from fastapi import FastAPI, HTTPException
 import numpy as np
 from vector import generate_default_user_vector, get_combined_vector
+import random
 
 app = FastAPI()
 
@@ -26,6 +27,7 @@ class ProductInput(BaseModel):
 
 def add_products_to_weaviate(product_list: List[Product]):
     for product in product_list:
+        print("add product", product)
         combined_vector = get_combined_vector(product.description, "../storage/"+product.image_name)
         data_object = {
             "name": product.name,
@@ -91,5 +93,36 @@ def add_products(productInput: ProductInput):
     try:
         add_products_to_weaviate(list(productInput.products))
         return {"status": "Products added successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/products")
+def get_all_products():
+    try:
+        result = client.query.get("Product", ["_additional {id}", "name"]).do()
+        products = result.get("data", {}).get("Get", {}).get("Product", [])
+
+        formatted_products = [
+	        {"id": prod["_additional"]["id"], "name": prod["name"]}
+	        for prod in products
+	    ]
+
+        return {"products": formatted_products}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/product/random")
+def get_random_product():
+    try:
+        result = client.query.get("Product", ["_additional {id}", "name"]).do()
+        products = result.get("data", {}).get("Get", {}).get("Product", [])
+
+        formatted_products = [
+	        {"id": prod["_additional"]["id"], "name": prod["name"]}
+	        for prod in products
+	    ]
+
+        random_product = random.choice(formatted_products)
+        return {"product": random_product}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
