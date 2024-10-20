@@ -1,0 +1,18 @@
+{
+  "class": "Product",
+  "description": "Класс для хранения товаров",
+  "properties": [
+    {
+      "name": "name",
+      "dataType": ["string"]
+    },
+    {
+      "name": "description",
+      "dataType": ["string"]
+    },
+    {
+      "name": "image",
+      "dataType": ["blob"]
+    }
+  ]
+}
