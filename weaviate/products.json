@@ -1,18 +1,10 @@
 {
-  "class": "Product",
-  "description": "Класс для хранения товаров",
-  "properties": [
-    {
-      "name": "name",
-      "dataType": ["string"]
-    },
-    {
-      "name": "description",
-      "dataType": ["string"]
-    },
-    {
-      "name": "image",
-      "dataType": ["blob"]
-    }
-  ]
+	"products": [
+		{
+			"id": "eced4122-5213-42d4-9385-8e75f4c290d4",
+			"name": "test",
+			"description": "cats cats",
+			"image_name": "cats.jpg"
+		}
+    ]
 }

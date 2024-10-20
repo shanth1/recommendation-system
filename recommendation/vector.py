@@ -5,6 +5,9 @@ from PIL import Image
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/32", device=device)
 
+def generate_default_user_vector():
+    return [0.0] * 512
+
 def get_combined_vector(text: str, image_path: str):
     image_input = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
     text_input = clip.tokenize([text]).to(device)
@@ -21,5 +24,3 @@ def get_combined_vector(text: str, image_path: str):
     combined_vector_flatten = combined_vector.flatten()
 
     return combined_vector
-
-print("VECTOR:", get_combined_vector("cats", "cats.jpg"))

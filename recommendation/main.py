@@ -1,8 +1,10 @@
-# main.py
+from typing import List
 from fastapi import FastAPI
 from pydantic import BaseModel
 import weaviate
+from fastapi import FastAPI, HTTPException
 import numpy as np
+from vector import generate_default_user_vector, get_combined_vector
 
 app = FastAPI()
 
@@ -12,6 +14,31 @@ class UserFeedback(BaseModel):
     user_vector: list
     product_id: str
     feedback: int  # 1 - лайк, -1 - дизлайк
+
+class Product(BaseModel):
+    id: str
+    name: str
+    description: str
+    image_name: str
+
+class ProductInput(BaseModel):
+    products: List[Product]
+
+def add_products_to_weaviate(product_list: List[Product]):
+    for product in product_list:
+        combined_vector = get_combined_vector(product.description, "../storage/"+product.image_name)
+        data_object = {
+            "name": product.name,
+            "description": product.description,
+            "image_name": product.image_name
+        }
+        client.data_object.create(
+            data_object=data_object,
+            class_name="Product",
+            uuid=product.id,
+            vector=combined_vector
+        )
+
 
 def update_user_vector(user_vector, product_vector, feedback):
     learning_rate = 0.1
@@ -25,18 +52,44 @@ def update_user_vector(user_vector, product_vector, feedback):
 
 @app.post("/update_vector")
 def update_vector(feedback: UserFeedback):
-    product = client.data_object.get_by_id(feedback.product_id, class_name="Product", with_vector=True)
+    try:
+        product = client.data_object.get_by_id(feedback.product_id, class_name="Product", with_vector=True)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Product with ID {feedback.product_id} not found.")
+
     if not product:
-        return
+        raise HTTPException(status_code=404, detail=f"Product with ID {feedback.product_id} not found.")
 
     product_vector = product["vector"]
 
     new_user_vector = update_user_vector(feedback.user_vector, product_vector, feedback.feedback)
 
-    result = client.query.get("Product", ["name", "description"]).with_near_vector({"vector": new_user_vector}).with_limit(1).do()
-    new_product = result["data"]["Get"]["Product"][0]
+    result = client.query \
+        .get("Product", ["name", "description", "_additional {id}"]) \
+        .with_near_vector({"vector": new_user_vector}) \
+        .with_limit(1) \
+        .do()
+
+    products = result.get("data", {}).get("Get", {}).get("Product", [])
+    if not products:
+        raise HTTPException(status_code=404, detail="No products found.")
+
+    new_product = products[0]
 
     return {
         "user_vector": new_user_vector,
         "product": new_product
     }
+
+@app.post("/generate_default_user_vector")
+def get_default_user_vector():
+    default_vector = generate_default_user_vector()
+    return {"user_vector": default_vector}
+
+@app.post("/add_products")
+def add_products(productInput: ProductInput):
+    try:
+        add_products_to_weaviate(list(productInput.products))
+        return {"status": "Products added successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
