@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
@@ -12,6 +13,10 @@ func main() {
 	app := fiber.New()
 
 	app.Use(logger.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000",
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+	}))
 
 	client := resty.New()
 
@@ -19,7 +24,7 @@ func main() {
 		var result map[string]interface{}
 
 		resp, err := client.R().
-			SetResult(&result). // Передаём указатель на переменную
+			SetResult(&result).
 			Get("http://localhost:8000/product/random")
 
 		if err != nil {
@@ -84,8 +89,8 @@ func main() {
 		return c.JSON(result)
 	})
 
-	log.Println("Сервер запущен на порту 3000")
-	if err := app.Listen(":3000"); err != nil {
+	log.Println("Сервер запущен на порту 4000")
+	if err := app.Listen(":4000"); err != nil {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
 	}
 }
