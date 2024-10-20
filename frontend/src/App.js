@@ -50,11 +50,25 @@ const App = () => {
 	const userVector =
 		JSON.parse(localStorage.getItem("userVector")) || defaultUserVector;
 
+	const fetchImage = async (imageName) => {
+		try {
+			const response = await fetch(
+				`http://localhost:4000/image?name=${imageName}`,
+			);
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			document.getElementById("myImage").src = url;
+		} catch (error) {
+			console.error("Error fetching the image:", error);
+		}
+	};
+
 	const fetchProduct = async () => {
 		try {
 			const response = await axios.get(
 				"http://localhost:4000/random-product",
 			);
+			await fetchImage(response.data.product.image_name);
 			setProduct(response.data.product);
 		} catch (error) {
 			console.error("Ошибка при получении продукта:", error);
@@ -117,6 +131,7 @@ const App = () => {
 				<Box textAlign="center">
 					<Typography variant="h5">{product.name}</Typography>
 					<img
+						id="myImage"
 						src={product.image}
 						alt={product.name}
 						style={{ maxWidth: "100%" }}

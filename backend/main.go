@@ -20,6 +20,12 @@ func main() {
 
 	client := resty.New()
 
+	app.Get("/image", func(c *fiber.Ctx) error {
+		imageName := c.Query("name")
+        imagePath := "../storage/" + imageName
+    	return c.SendFile(imagePath)
+ 	})
+
 	app.Get("/random-product", func(c *fiber.Ctx) error {
 		var result map[string]interface{}
 
