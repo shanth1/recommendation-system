@@ -67,7 +67,7 @@ def update_vector(feedback: UserFeedback):
     new_user_vector = update_user_vector(feedback.user_vector, product_vector, feedback.feedback)
 
     result = client.query \
-        .get("Product", ["name", "description", "_additional {id}"]) \
+        .get("Product", ["name", "description", "image_name", "_additional {id}"]) \
         .with_near_vector({"vector": new_user_vector}) \
         .with_limit(1) \
         .do()
@@ -76,7 +76,17 @@ def update_vector(feedback: UserFeedback):
     if not products:
         raise HTTPException(status_code=404, detail="No products found.")
 
-    new_product = products[0]
+    formatted_products = [
+    	{
+     		"id": prod["_additional"]["id"],
+      		"name": prod["name"],
+      		"description": prod["description"],
+      		"image_name": prod["image_name"],
+
+     	}
+     	for prod in products
+    ]
+    new_product = formatted_products[0]
 
     return {
         "user_vector": new_user_vector,
@@ -99,13 +109,19 @@ def add_products(productInput: ProductInput):
 @app.get("/products")
 def get_all_products():
     try:
-        result = client.query.get("Product", ["_additional {id}", "name"]).do()
+        result = client.query.get("Product", ["_additional {id}", "name", "description", "image_name"]).do()
         products = result.get("data", {}).get("Get", {}).get("Product", [])
 
         formatted_products = [
-	        {"id": prod["_additional"]["id"], "name": prod["name"]}
-	        for prod in products
-	    ]
+        	{
+         		"id": prod["_additional"]["id"],
+          		"name": prod["name"],
+          		"description": prod["description"],
+          		"image_name": prod["image_name"],
+
+         	}
+         	for prod in products
+        ]
 
         return {"products": formatted_products}
     except Exception as e:
@@ -114,13 +130,19 @@ def get_all_products():
 @app.get("/product/random")
 def get_random_product():
     try:
-        result = client.query.get("Product", ["_additional {id}", "name"]).do()
+        result = client.query.get("Product", ["_additional {id}", "name", "description", "image_name"]).do()
         products = result.get("data", {}).get("Get", {}).get("Product", [])
 
         formatted_products = [
-	        {"id": prod["_additional"]["id"], "name": prod["name"]}
-	        for prod in products
-	    ]
+        	{
+         		"id": prod["_additional"]["id"],
+          		"name": prod["name"],
+          		"description": prod["description"],
+          		"image_name": prod["image_name"],
+
+         	}
+         	for prod in products
+        ]
 
         random_product = random.choice(formatted_products)
         return {"product": random_product}
